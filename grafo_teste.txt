@@ -1,0 +1,6 @@
+5 1 #n de nós com peso
+1 2 2 #aresta 1 e 2 peso 2
+2 5 1
+5 3 7
+4 5 2
+1 5 3
