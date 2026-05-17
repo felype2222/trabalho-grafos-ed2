@@ -1,0 +1,10 @@
+6 1 # 6 vertices, ponderado (1)
+1 2 4 # aresta entre 1 e 2 com peso 4
+1 3 2 # aresta entre 1 e 3 com peso 2
+2 3 1 # aresta entre 2 e 3 com peso 1
+2 4 5 # aresta entre 2 e 4 com peso 5
+3 4 8 # aresta entre 3 e 4 com peso 8
+3 5 10 # aresta entre 3 e 5 com peso 10
+4 5 2 # aresta entre 4 e 5 com peso 2
+4 6 6 # aresta entre 4 e 6 com peso 6
+5 6 3 # aresta entre 5 e 6 com peso 3
