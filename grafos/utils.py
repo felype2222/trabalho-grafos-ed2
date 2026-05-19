@@ -1,58 +1,94 @@
-# grafos/utils.py
+"""
+Módulo Utilitário de I/O (Entrada/Saída)
+Trabalho de Estrutura de Dados 2
+
+Este arquivo é responsável por isolar a lógica de leitura de arquivos em disco.
+Ele atua como uma "Fábrica" (Factory Pattern), lendo o arquivo de texto bruto,
+interpretando o formato padronizado e devolvendo um objeto Grafo instanciado e 
+pronto para uso em memória.
+"""
+
 import os
 from grafos.estrutura import GrafoListaAdjacencia
 
 class LeitorArquivo:
     """
-    Classe utilitária responsável por ler os arquivos .txt e 
-    instanciar os objetos do tipo Grafo.
+    Classe utilitária para leitura e sanitização de arquivos.
+    
+    Não armazena estado interno, por isso seus métodos podem ser chamados 
+    diretamente através da classe (métodos estáticos), sem a necessidade de 
+    instanciar um objeto LeitorArquivo.
     """
     
     @staticmethod
     def ler_grafo(caminho_arquivo):
-        # 1. Verifica se o arquivo realmente existe para evitar que o programa quebre
+        """
+        Lê um arquivo .txt e constrói o grafo correspondente.
+        
+        O arquivo deve seguir estritamente o contrato:
+        - Linha 1: [num_vertices] [0 para não-ponderado, 1 para ponderado]
+        - Linha N: [vertice_u] [vertice_v] [peso_opcional] # comentários
+        
+        Retorna:
+            GrafoListaAdjacencia: Objeto instanciado com os dados lidos do arquivo.
+            
+        Exceções:
+            FileNotFoundError: Se o arquivo especificado não existir no caminho.
+            ValueError: Se o arquivo estiver completamente vazio.
+        """
+        # 1. Validação de pré-condição: garante que o arquivo existe antes de tentar abrir.
+        # Isso evita que o programa quebre com erros genéricos do sistema operacional.
         if not os.path.exists(caminho_arquivo):
             raise FileNotFoundError(f"Erro: O arquivo '{caminho_arquivo}' não foi encontrado.")
 
-        # 2. Abre o arquivo em modo de leitura ('r')
+        # 2. Abertura segura do arquivo utilizando o context manager 'with'.
+        # O 'with' garante que o arquivo será fechado corretamente e a memória liberada
+        # mesmo que ocorra um erro durante a leitura.
         with open(caminho_arquivo, 'r', encoding='utf-8') as arquivo:
             linhas = arquivo.readlines()
 
-        # Remove linhas que sejam completamente vazias (só espaços ou quebras de linha)
+        # 3. Limpeza dos dados lidos (Sanitização)
+        # Utiliza list comprehension para remover espaços em branco do início/fim das linhas 
+        # e descarta linhas que sejam apenas espaços ou quebras de linha puras.
         linhas = [linha.strip() for linha in linhas if linha.strip()]
 
         if not linhas:
             raise ValueError("Erro: O arquivo está vazio.")
 
-        # 3. Processamento do Cabeçalho (Primeira Linha)
-        # O split() divide a linha pelos espaços. Ex: "5 0 #coment" -> ["5", "0", "#coment"]
+        # 4. Processamento do Cabeçalho (Linha 1 do arquivo)
+        # O split() divide a string por espaços em branco de forma inteligente.
+        # Ex: "5 0 #comentário" se transforma na lista ["5", "0", "#comentário"]
         header = linhas[0].split()
         num_vertices = int(header[0])
         
-        # Transforma o 1 em True (ponderado) e o 0 em False (não ponderado)
+        # Avaliação Booleana: O número 1 vira True (ponderado), o 0 vira False (não ponderado)
         ponderado = int(header[1]) == 1
 
-        # Instancia a nossa classe concreta baseada na leitura
+        # Instanciação: Cria o objeto da subclasse concreta de Grafo.
+        # A vantagem da arquitetura é que, se o trabalho exigisse Matriz de Adjacência no futuro,
+        # bastaria trocar a classe importada e instanciada aqui, sem mexer no resto do programa.
         grafo = GrafoListaAdjacencia(num_vertices, ponderado)
 
-        # 4. Processamento das Arestas (Restante das linhas)
+        # 5. Processamento das Arestas (Laço iterando a partir da Linha 2 até o final)
         for linha in linhas[1:]:
             dados = linha.split()
             
-            # Se a linha for apenas um comentário (começar com #), nós ignoramos
+            # Tratamento de Comentários: Se a linha for apenas um comentário (inicia com #)
+            # ou estiver vazia após o split, o comando 'continue' pula para a próxima iteração do laço.
             if not dados or dados[0].startswith('#'):
                 continue
 
+            # Mapeamento dos vértices que formam a aresta
             u = int(dados[0])
             v = int(dados[1])
 
             if ponderado:
-                # Se for ponderado, obrigatoriamente pegamos o terceiro item
+                # Em grafos ponderados, o terceiro argumento da lista é obrigatoriamente o peso
                 peso = float(dados[2])
                 grafo.inserir_aresta(u, v, peso)
             else:
-                # Se não for ponderado, passamos apenas os vértices. 
-                # A nossa classe automaticamente colocará o peso padrão 1.0.
+                # Em grafos não-ponderados, a classe GrafoListaAdjacencia 
+                # assumirá automaticamente o peso padrão definido em seu método (1.0).
                 grafo.inserir_aresta(u, v)
 
         return grafo
